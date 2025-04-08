@@ -1,0 +1,1 @@
+# Virtual Event Management System backend
