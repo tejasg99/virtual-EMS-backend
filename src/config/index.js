@@ -5,8 +5,10 @@ dotenv.config(); //load the variables
 export const config = {
     port: process.env.PORT || 5000,
     mongodbUri: process.env.MONGODB_URI,
-    jwtSecret: process.env.JWT_SECRET,
-    jwtExpiresIn: process.env.JWT_EXPIRES_IN || '1d',
+    accessTokenSecret: process.env.ACCESS_TOKEN_SECRET,
+    accessTokenExpiry: process.env.ACCESS_TOKEN_EXPIRY || '1d',
+    refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET,
+    refreshTokenExpiry: process.env.REFRESH_TOKEN_EXPIRY || '10d',
     email: {
         host: process.env.EMAIL_HOST,
         port: process.env.EMAIL_PORT,

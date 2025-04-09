@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import { config } from '../config/index.js';
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
@@ -48,7 +49,32 @@ userSchema.methods.isPasswordCorrect = async function(candidatePassword){
     return await bcrypt.compare(candidatePassword, this.password)
 }
 
-//TODO: jwt accessToken and refreshToken decision
+//Generate accessToken and refreshToken methods to manage user auth state from the server 
+userSchema.methods.generateAccessToken = function() {
+    return jwt.sign(
+        {
+            _id: this._id,
+            email: this.email,
+            name: this.name,
+        },
+        config.accessTokenSecret,
+        {
+            expiresIn: config.accessTokenExpiry
+        }
+    )
+}
+
+userSchema.methods.generateRefreshToken = function() {
+    return jwt.sign(
+        {
+            _id: this._id,
+        },
+        config.refeshTokenSecret,
+        {
+            expiresIn: config.refreshTokenExpiry
+        }
+    )
+}
 
 export const User = mongoose.model('User', userSchema);
 
