@@ -27,7 +27,10 @@ const userSchema = new Schema({
         type: String,
         enum: ['attendee', 'organizer', 'speaker', 'admin'],
         default: 'attendee',
-    }
+    },
+    refreshToken: {
+        type: String,
+    },
 }, { 
     timestamps: true, //adds createdAt and updatedAt automatically
 })
