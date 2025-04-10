@@ -72,7 +72,7 @@ userSchema.methods.generateRefreshToken = function() {
         {
             _id: this._id,
         },
-        config.refeshTokenSecret,
+        config.refreshTokenSecret,
         {
             expiresIn: config.refreshTokenExpiry
         }
