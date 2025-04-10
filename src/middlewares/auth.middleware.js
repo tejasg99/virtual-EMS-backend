@@ -19,7 +19,7 @@ export const verifyJWT = asyncHandler(async (req, _, next) => {
   
       //check if user still exists
       const user = await User.findById(decodedToken?._id).select(
-        "-refreshToken"
+        "-password -refreshToken"
       );
   
       if (!user) {
