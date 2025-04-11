@@ -23,6 +23,11 @@ const generateAccessAndRefreshTokens = async(userId) => {
     }
 }
 
+/**
+ * @desc    Register a new user
+ * @route   POST /api/v1/auth/register
+ * @access  Public
+*/
 const registerUser = asyncHandler( async(req, res) => {
     const { name, email, password } = req.body;
 
@@ -67,6 +72,11 @@ const registerUser = asyncHandler( async(req, res) => {
     .json(new ApiResponse(200, createdUser, 'User registered successfully'));
 })
 
+/**
+ * @desc    Authenticate user and get tokens
+ * @route   POST /api/v1/auth/login
+ * @access  Public
+*/
 const loginUser = asyncHandler(async(req, res) => {
     const {email, password} = req.body;
 
@@ -117,6 +127,11 @@ const loginUser = asyncHandler(async(req, res) => {
     );
 })
 
+/**
+ * @desc    Log out user
+ * @route   POST /api/v1/auth/logout
+ * @access  Private (Requires valid access token via 'protect' middleware)
+*/
 const logoutUser = asyncHandler(async(req, res) => {
     // auth middleware already attached req.user
     // find user and reset refeshToken
@@ -144,6 +159,11 @@ const logoutUser = asyncHandler(async(req, res) => {
 
 })
 
+/**
+ * @desc    Refresh access token using refresh token
+ * @route   POST /api/v1/auth/refresh-token
+ * @access  Public (but requires a valid refresh token, typically from cookie)
+*/
 const refreshAccessToken = asyncHandler(async(req, res) => {
     // Get refresh Token
     const incomingRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
