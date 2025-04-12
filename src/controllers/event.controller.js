@@ -128,3 +128,152 @@ const getAllEvents = asyncHandler(async(req, res) => {
     .status(200)
     .json(new ApiResponse(200, { events: pagination }, 'Events fetched successfully'))
 })
+
+/**
+ * @desc    Get a single event by ID
+ * @route   GET /api/v1/events/:id
+ * @access  Public
+*/
+const getEventById = asyncHandler(async(req, res) => {
+    const { eventId } = req.params;
+
+    if(!isValidObjectId(eventId)) {
+        throw new ApiError(400, 'Invalid event ID');
+    }
+    
+    const event = await Event.findById(eventId)
+    .populate('organizer', 'name email') // Populate details
+    .populate('speakers', 'name email');
+
+    if (!event) {
+        throw new ApiError(404, 'Event not found');
+    }
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, event, 'Event details fetched successfully'));
+})
+
+/**
+ * @desc    Update an existing event
+ * @route   PATCH /api/v1/events/:id
+ * @access  Private (Original Organizer or Admin)
+*/
+const updateEvent = asyncHandler(async(req, res) => {
+    const { eventId } = req.params;
+    const userId = req.user?._id;
+    const userRole = req.user?.role;
+    const { updateData } = req.body;
+
+    if(!isValidObjectId(eventId)) {
+        throw new ApiError(400, 'Invalid event ID');
+    }
+
+    //find event
+    const event = await Event.findById(eventId);
+    if(!event) {
+        throw new ApiError(404, 'Event not found')
+    }
+
+    //authorization check - must be an organizer or admin
+    // Mongoose ObjectId comparison needs .equals() method
+    if (!event.organizer.equals(userId) && userRole !== 'admin') {
+        throw new ApiError(403, 'You do not have permission to update this event');
+    }
+
+    // Filter allowed fields for update (prevent changing organizer, jitsiRoomName etc.)
+    const allowedUpdates = ['title', 'description', 'eventType', 'startTime', 'endTime', 'speakers', 'maxAttendees', 'status'];
+
+    const filteredUpdateData = {};
+    Object.keys(updateData).forEach(key => {
+        if(allowedUpdates.includes(key)) {
+            if (key === 'speakers' && !Array.isArray(updateData[key])) {
+                // Skip invalid speaker format
+               console.warn("Invalid format for speakers update, should be an array.");
+               return; // Skip this key
+           }
+            if ((key === 'startTime' || key === 'endTime') && isNaN(new Date(updateData[key]).getTime())) {
+                console.warn(`Invalid date format for ${key}`);
+                return; // skip invalid date
+            }
+           filteredUpdateData[key] = updateData[key];
+        }
+    });
+
+    // Validate start/end time logic if both are updated
+    const newStartTime = filteredUpdateData.startTime ? new Date(filteredUpdateData.startTime) : event.startTime;
+    const newEndTime = filteredUpdateData.endTime ? new Date(filteredUpdateData.endTime) : event.endTime;
+    if (newStartTime >= newEndTime) {
+        throw new ApiError(400, 'End time must be after start time');
+    }
+    filteredUpdateData.startTime = newStartTime; // Ensure Date objects are saved
+    filteredUpdateData.endTime = newEndTime;
+
+    // Perform the update
+    const updatedEvent = await Event.findByIdAndUpdate(
+        eventId,
+        { $set: filteredUpdateData },
+        { new: true, runValidators: true } // Return updated doc, run schema validators
+    )
+    .populate('organizer', 'name email')
+    .populate('speakers', 'name email');
+
+    if (!updatedEvent) {
+        throw new ApiError(500, 'Failed to update the event');
+    }
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, updatedEvent, 'Event updated successfully'));
+})
+
+/**
+ * @desc    Delete an event (changes status to 'cancelled')
+ * @route   DELETE /api/v1/events/:id
+ * @access  Private (Original Organizer or Admin)
+*/
+const deleteEvent = asyncHandler(async(req, res) => {
+    const {eventId} = req.params;
+    const userId = req.user?._id;
+    const userRole = req.user.role;
+
+    if(!isValidObjectId(eventId)) {
+        throw new ApiError(400, 'Invalid event Id');
+    }
+
+    // Find the event
+    const event = await Event.findById(eventId);
+    if (!event) {
+        throw new ApiError(404, 'Event not found');
+    }
+
+    // Authorization Check: Must be organizer or admin
+    if (!event.organizer.equals(userId) && userRole !== 'admin') {
+        throw new ApiError(403, 'You do not have permission to delete this event');
+    }
+
+    // Check if already cancelled
+    if (event.status === 'cancelled') {
+        return res
+        .status(200)
+        .json(new ApiResponse(200, event, 'Event is already cancelled'));
+    }
+
+    // Performing "Soft Delete" by updating status to 'cancelled' for now
+    event.status = 'cancelled';
+    await event.save({ validateBeforeSave: false });
+
+    // TODO: Consider triggering notifications to registered users here or via an event listener
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, event, 'Event cancelled successfully'));
+})
+
+export {
+    createEvent,
+    getAllEvents,
+    getEventById,
+    updateEvent,
+    deleteEvent
+}
