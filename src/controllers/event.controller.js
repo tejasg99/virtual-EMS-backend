@@ -83,7 +83,7 @@ const createEvent = asyncHandler(async(req, res) => {
 
     return res
     .status(200)
-    .json(new ApiResponse(200, createEvent, 'Event created successfully'))
+    .json(new ApiResponse(200, createdEvent, 'Event created successfully'))
 });
 
 /**
