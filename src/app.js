@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import errorHandler from "./middlewares/errorHandler.middleware.js";
 import { ApiError } from "./utils/apiError.js";
+import apiRouter from "./routes/index.js";
 
 const app = express();
 
@@ -19,8 +20,8 @@ app.use((req, res, next) => {
     next();
 });
 
-//routes
-
+//Mount all routes
+app.use('/api/v1', apiRouter);
 
 //healthCheck route 
 app.get('/', (req, res) => {
