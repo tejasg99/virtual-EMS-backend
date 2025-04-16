@@ -4,7 +4,7 @@ import asyncHandler from '../utils/asyncHandler.js';
 import ApiError from '../utils/apiError.js';
 import ApiResponse from '../utils/apiResponse.js';
 import { config } from '../config/index.js';
-
+import sendEmail from '../services/email.service.js';
 
 // AT and RT separate method
 const generateAccessAndRefreshTokens = async(userId) => {
@@ -65,6 +65,23 @@ const registerUser = asyncHandler( async(req, res) => {
 
     if(!createdUser) {
         throw new ApiError(500, 'Failed to register the user')
+    }
+
+    // Send Welcome Email 
+    try {
+        const emailSubject = 'Welcome to EventMan - a virtual Events Platform!';
+        const emailText = `Hi ${createdUser.name},\n\nWelcome! Your account has been created successfully.\n\nYou can now log in and explore upcoming events.\n\nThanks,\nThe EventMan Team`;
+        // const emailHtml = `<p>Hi ${createdUser.name},</p><p>Welcome!...</p>`;
+
+        await sendEmail({
+            to: createdUser.email,
+            subject: emailSubject,
+            text: emailText,
+            // html: emailHtml,
+        });
+    } catch (emailError) {
+        // Log the error but don't necessarily block the user registration response
+        console.error(`Failed to send welcome email to ${createdUser.email}: ${emailError.message}`);
     }
 
     return res
