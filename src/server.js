@@ -10,7 +10,7 @@ import initializeChatHandler from "./socketHandlers/chat.handler.js";
 import initializeQnaHandler from "./socketHandlers/qna.handler.js";
 
 dotenv.config({
-    path: './env'
+    path: '../.env'
 })
 
 const server = http.createServer(app);

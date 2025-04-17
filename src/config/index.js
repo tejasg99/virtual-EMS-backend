@@ -16,4 +16,7 @@ export const config = {
         pass: process.env.EMAIL_PASS,
         from: process.env.EMAIL_FROM,
     },
+    adminEmail: process.env.SEED_ADMIN_EMAIL,
+    adminPass: process.env.SEED_ADMIN_PASSWORD,
+    adminName: process.env.SEED_ADMIN_NAME,
 };
