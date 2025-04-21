@@ -22,8 +22,8 @@ router.get('/me/registrations', getUserRegistrations); //user registered events
 
 //Admin only routes
 router.get('/', restrictTo('admin'), getAllUsers);
-router.get('/:id', restrictTo('admin'), getUserById);
-router.patch('/id/role', restrictTo('admin'), updateUserRole);
-router.delete('/:id', restrictTo('admin'), deleteUser);
+router.get('/:userId', restrictTo('admin'), getUserById);
+router.patch('/userId/role', restrictTo('admin'), updateUserRole);
+router.delete('/:userId', restrictTo('admin'), deleteUser);
 
 export default router;

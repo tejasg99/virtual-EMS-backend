@@ -21,11 +21,11 @@ router.post('/', restrictTo('organizer', 'admin'), createEvent); //create requir
 
 //Public read operations
 router.get('/', getAllEvents);
-router.get('/:id', getEventById);
+router.get('/:eventId', getEventById);
 
 //require auth+ownership/admin check
-router.patch('/:id', verifyJWT, updateEvent);
-router.delete('/:id', verifyJWT, deleteEvent);
+router.patch('/:eventId', verifyJWT, updateEvent);
+router.delete('/:eventId', verifyJWT, deleteEvent);
 
 //Event registration related routes
 router.post('/:eventId/register', verifyJWT, registerForEvent);

@@ -8,7 +8,7 @@ import {asyncHandler} from '../utils/asyncHandler.js';
  * @route   GET /api/v1/users/me
  * @access  Private (Requires valid access token via 'protect' middleware)
 */
-const getCurrentUser = asyncHandler(async(requestAnimationFrame, res) => {
+const getCurrentUser = asyncHandler(async(req, res) => {
     // The 'verifyJWT' middleware already found the user and attached it to req.user so just need to return it
     return res
     .status(200)
