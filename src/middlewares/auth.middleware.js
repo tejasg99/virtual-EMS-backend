@@ -1,7 +1,7 @@
 import { ApiError } from '../utils/apiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import jwt from 'jsonwebtoken';
-import User from '../models/user.model.js';
+import {User} from '../models/user.model.js';
 import { config } from '../config/index.js';
 
 // Middleware to verify JWT and attach user to request

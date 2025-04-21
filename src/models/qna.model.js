@@ -36,6 +36,6 @@ const qnaSchema = new Schema({
 })
 
 // Index for retrieving Q&A for an event, potentially filtering/sorting
-qnaMessageSchema.index({ event: 1, isAnswered: 1, createdAt: -1 }); // Sort newest first
+qnaSchema.index({ event: 1, isAnswered: 1, createdAt: -1 }); // Sort newest first
 
 export const QnAMessage = mongoose.model('QnAMessage', qnaSchema);

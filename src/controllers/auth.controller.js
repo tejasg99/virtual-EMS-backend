@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
-import { User } from '../models/user.model';
-import asyncHandler from '../utils/asyncHandler.js';
-import ApiError from '../utils/apiError.js';
-import ApiResponse from '../utils/apiResponse.js';
+import { User } from '../models/user.model.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiError } from '../utils/apiError.js';
+import { ApiResponse } from '../utils/apiResponse.js';
 import { config } from '../config/index.js';
 import sendEmail from '../services/email.service.js';
 

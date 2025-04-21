@@ -21,6 +21,6 @@ const chatSchema = new Schema({
 })
 
 // Index for retrieving chat messages for a specific event, sorted by time
-chatMessageSchema.index({ event: 1, createdAt: 1 });
+chatSchema.index({ event: 1, createdAt: 1 });
 
 export const ChatMessage = mongoose.model('ChatMessage', chatSchema);

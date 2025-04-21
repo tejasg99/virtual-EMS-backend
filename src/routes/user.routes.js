@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verifyJWT, restrictTo } from "../middlewares/auth.middleware";
+import { verifyJWT, restrictTo } from "../middlewares/auth.middleware.js";
 import {
     getCurrentUser,
     updateUserProfile,
