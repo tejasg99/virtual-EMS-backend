@@ -29,7 +29,7 @@ router.delete('/:eventId', verifyJWT, deleteEvent);
 
 //Event registration related routes
 router.post('/:eventId/register', verifyJWT, registerForEvent);
-router.delete('/:eventId/umregister', verifyJWT, unregisterFromEvent);
+router.delete('/:eventId/unregister', verifyJWT, unregisterFromEvent);
 router.get('/:eventId/registration-status', verifyJWT, checkRegistrationStatus);
 
 router.get('/:eventId/registrations', verifyJWT, getEventRegistrations); //requires organizer/admin check(done in controller)
