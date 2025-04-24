@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { verifyJWT, restrictTo } from "../middlewares/auth.middleware.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {
     createEvent,
     getAllEvents,
@@ -17,7 +17,7 @@ import {
 const router = Router();
 
 //Event crud operations
-router.post('/', restrictTo('organizer', 'admin'), createEvent); //create required organizer or admin role
+router.post('/', createEvent); //create required organizer or admin role
 
 //Public read operations
 router.get('/', getAllEvents);

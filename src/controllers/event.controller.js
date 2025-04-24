@@ -22,6 +22,7 @@ const createEvent = asyncHandler(async(req, res) => {
     } = req.body;
 
     const organizerId = req.user?._id;
+    const currentUserRole = req.user.role; // Get current role
 
     if(!title || !description || !startTime || !endTime) {
         throw new ApiError(400, 'title, description, startTime and endTime are required');
@@ -47,7 +48,7 @@ const createEvent = asyncHandler(async(req, res) => {
         // Check if speaker IDs are valid ObjectIds and correspond to actual users
         const speakerDocs = await User.find({
             _id: { $in: speakers },
-            role: { $in: ['speaker', 'organizer', 'admin'] } 
+            // role: { $in: ['speaker', 'organizer', 'admin'] } 
         }).select('_id'); // Only fetch IDs for validation
 
         validSpeakerIds = speakerDocs.map(doc => doc._id);
@@ -72,9 +73,33 @@ const createEvent = asyncHandler(async(req, res) => {
 
     await event.save();
 
+    // Update user role
+    let roleUpdateMessage = '';
+    if(currentUserRole === 'attendee') {
+        try {
+            const updatedUser = await User.findByIdAndUpdate(
+                organizerId,
+                { role: 'organizer'},
+                { new: true } // Return updated user document
+            );
+            if(updatedUser) {
+                console.log(`User ${updatedUser.email} promoted to organizer.`);
+                roleUpdateMessage = ' Your role has been updated to Organizer.';
+                // NOTE: The JWT token the user currently has *still* contains the OLD role ('attendee').
+                // The role change will take effect on their *next* login or token refresh.
+            } else {
+                console.warn(`Could not find user ${organizerId} to update role after event creation.`);
+            }
+        } catch (roleUpdateError) {
+            console.error(`Error updating user ${organizerId} role to organizer:`, roleUpdateError);
+            // Log error but don't fail the event creation response
+            roleUpdateMessage = ' Could not automatically update your role, please contact support if needed.';
+        }
+    }
+
     // Populate organizer/speaker details for the response
     const createdEvent = await Event.findById(event._id)
-    .populate('organizer', 'name email')
+    .populate('organizer', 'name email role')
     .populate('speakers', 'name email');
 
     if (!createdEvent) {
@@ -83,7 +108,7 @@ const createEvent = asyncHandler(async(req, res) => {
 
     return res
     .status(200)
-    .json(new ApiResponse(200, createdEvent, 'Event created successfully'))
+    .json(new ApiResponse(200, createdEvent, `Event created successfully. ${roleUpdateMessage}`));
 });
 
 /**
