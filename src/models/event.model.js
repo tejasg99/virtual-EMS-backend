@@ -37,8 +37,11 @@ const eventSchema  = new Schema({
         required: true,
     },
     speakers: {
-        type: Schema.Types.ObjectId, //array of speakers
-        ref: 'User'
+        type: [{ // Defines it as an array
+            type: mongoose.Schema.Types.ObjectId, // Each element is an ObjectId
+            ref: 'User' // Referencing the User model
+        }],
+        default: [],
     },
     JitsiRoomName: {
         type: String,

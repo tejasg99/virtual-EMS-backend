@@ -17,7 +17,7 @@ import {
 const router = Router();
 
 //Event crud operations
-router.post('/', createEvent); //create required organizer or admin role
+router.post('/', verifyJWT, createEvent); //create required organizer or admin role
 
 //Public read operations
 router.get('/', getAllEvents);
