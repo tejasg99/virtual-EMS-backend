@@ -24,12 +24,12 @@ const eventSchema  = new Schema({
     endTime: {
         type: Date,
         required: [true, 'End time is required'],
-        validate: [
-            function(value) {
-                return this.startTime < value;
-            },
-            'End time must be after start time'
-        ]
+        // validate: [
+        //     function(value) {
+        //         return this.startTime < value;
+        //     },
+        //     'End time must be after start time'
+        // ]
     },
     organizer: {
         type: Schema.Types.ObjectId,
@@ -43,7 +43,7 @@ const eventSchema  = new Schema({
         }],
         default: [],
     },
-    JitsiRoomName: {
+    jitsiRoomName: {
         type: String,
         required: true,
         unique: true,

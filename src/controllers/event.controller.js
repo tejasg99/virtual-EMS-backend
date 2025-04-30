@@ -193,7 +193,15 @@ const updateEvent = asyncHandler(async(req, res) => {
     const { eventId } = req.params;
     const userId = req.user?._id;
     const userRole = req.user?.role;
-    const { updateData } = req.body;
+    const updateData = req.body;
+
+    // Check if updateData is actually received
+    if (!updateData || Object.keys(updateData).length === 0) {
+        console.error('Error: req.body (updateData) is undefined or empty in updateEvent controller.');
+        // Even if body parser is working, maybe frontend sent empty object?
+        // Let's check Content-Length header from log above. If it's > 0 but body is undefined, it's a parser issue.
+        throw new ApiError(400, 'No update data received.');
+   }
 
     if(!isValidObjectId(eventId)) {
         throw new ApiError(400, 'Invalid event ID');
