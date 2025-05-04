@@ -5,7 +5,9 @@ import {
     getAllEvents,
     getEventById,
     updateEvent,
-    deleteEvent
+    deleteEvent,
+    getMyOrganizedEvents,
+    getOrganizerStats,
 } from "../controllers/event.controller.js";
 import {
     registerForEvent,
@@ -15,6 +17,10 @@ import {
 } from "../controllers/registration.controller.js";
 
 const router = Router();
+
+// Specific routes 
+router.get('/my-organized', verifyJWT, getMyOrganizedEvents); // fetch events organized by the current user
+router.get('/my-organized/stats', verifyJWT, getOrganizerStats); // Fetch organizer stats
 
 //Event crud operations
 router.post('/', verifyJWT, createEvent); //create required organizer or admin role

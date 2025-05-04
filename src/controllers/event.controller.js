@@ -1,6 +1,7 @@
 import mongoose, { isValidObjectId } from "mongoose";
 import { Event } from "../models/event.model.js";
 import { User } from "../models/user.model.js";
+import { Registration } from "../models/registration.model.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -308,10 +309,164 @@ const deleteEvent = asyncHandler(async(req, res) => {
     .json(new ApiResponse(200, event, 'Event cancelled successfully'));
 })
 
+/**
+ * @desc    Get events organized by the current user with registration counts
+ * @route   GET /api/v1/events/my-organized
+ * @access  Private (Logged-in users)
+*/
+const getMyOrganizedEvents = asyncHandler(async (req, res) => {
+    const organizerId = req.user._id;
+
+    // Pagination Parameters
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+
+    // Sorting Parameters 
+    const sortBy = req.query.sortBy || 'startTime'; // Default sort by start time
+    const order = req.query.order === 'desc' ? -1 : 1;
+    const sortOptions = { [sortBy]: order };
+
+    // Filtering 
+    // Find events where the organizer field matches the logged-in user's ID
+    const filter = { organizer: organizerId };
+    // Optionally add status filter if needed via query params
+    if (req.query.status) {
+        filter.status = req.query.status;
+    }
+
+    // Database Query 
+    // Find the events organized by the user
+    const events = await Event.find(filter)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
+        .lean(); // Use lean for performance if we're modifying the objects
+
+    // Get total count for pagination
+    const totalEvents = await Event.countDocuments(filter);
+
+    // Add Registration Count to each event 
+    // Use Promise.all to fetch counts concurrently
+    const eventsWithCounts = await Promise.all(
+        events.map(async (event) => {
+            const registrationCount = await Registration.countDocuments({ event: event._id });
+            return {
+                ...event, // Spread the original event data
+                registrationCount: registrationCount, // Add the count
+            };
+        })
+    );
+
+    // Pagination Metadata 
+    const totalPages = Math.ceil(totalEvents / limit);
+    const pagination = {
+        totalEvents,
+        totalPages,
+        currentPage: page,
+        limit,
+    };
+
+    // Structure Response 
+    const responseData = {
+        events: eventsWithCounts, // Use the events with counts added
+        pagination,
+    };
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, responseData, 'Your organized events fetched successfully'));
+});
+
+/**
+ * @desc    Get aggregate statistics for events organized by the current user
+ * @route   GET /api/v1/events/my-organized/stats
+ * @access  Private (Logged-in users)
+*/
+const getOrganizerStats = asyncHandler(async (req, res) => {
+    const organizerId = req.user._id;
+
+    // Use Promise.all to run aggregations concurrently
+    const [stats] = await Promise.all([
+        Event.aggregate([
+            // Match events organized by the current user
+            { $match: { organizer: new mongoose.Types.ObjectId(organizerId) } },
+            // Group to calculate counts based on status
+            {
+                $group: {
+                    _id: null, // Group all matched documents together
+                    totalEvents: { $sum: 1 },
+                    upcomingEvents: {
+                        $sum: { $cond: [{ $eq: ['$status', 'upcoming'] }, 1, 0] }
+                    },
+                    liveEvents: {
+                        $sum: { $cond: [{ $eq: ['$status', 'live'] }, 1, 0] }
+                    },
+                    pastEvents: {
+                        $sum: { $cond: [{ $eq: ['$status', 'past'] }, 1, 0] }
+                    },
+                    cancelledEvents: {
+                        $sum: { $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0] }
+                    },
+                    // Store the event IDs for the next stage
+                    eventIds: { $push: '$_id' }
+                }
+            },
+            // Lookup total registrations for the matched events
+            {
+                $lookup: {
+                    from: 'registrations', // The name of the registrations collection
+                    localField: 'eventIds', // Field from the previous stage (array of event IDs)
+                    foreignField: 'event', // Field in the registrations collection to match against
+                    as: 'allRegistrations' // Name of the new array field to add
+                }
+            },
+            // Add a field for the total registration count
+            {
+                $addFields: {
+                    totalRegistrations: { $size: '$allRegistrations' }
+                }
+            },
+            // Project the final desired fields
+            {
+                $project: {
+                    _id: 0, // Exclude the default _id field
+                    totalEvents: 1,
+                    upcomingEvents: 1,
+                    liveEvents: 1,
+                    pastEvents: 1,
+                    cancelledEvents: 1,
+                    totalRegistrations: 1
+                }
+            }
+        ])
+        // Add more concurrent queries here if needed (e.g., total attendees)
+    ]);
+
+
+    // Handle case where organizer has no events (aggregate returns empty array)
+    const result = stats[0] || {
+        totalEvents: 0,
+        upcomingEvents: 0,
+        liveEvents: 0,
+        pastEvents: 0,
+        cancelledEvents: 0,
+        totalRegistrations: 0
+    };
+
+    return res.status(200).json(
+        new ApiResponse(200, result, 'Organizer statistics fetched successfully')
+    );
+});
+
+
+
 export {
     createEvent,
     getAllEvents,
     getEventById,
     updateEvent,
-    deleteEvent
+    deleteEvent,
+    getMyOrganizedEvents,
+    getOrganizerStats,
 }
