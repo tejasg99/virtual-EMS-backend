@@ -70,11 +70,56 @@ const updateUserProfile = asyncHandler(async(req, res) => {
  * @access  Private/Admin
 */
 const getAllUsers = asyncHandler(async(req, res) => {
-    //TODO: Pagination, filtering, sorting
-    const users = await User.find().select('-password -refreshToken');
+    // Pagination Parameters
+    const page = parseInt(req.query.page, 10) || 1; // Default to page 1
+    const limit = parseInt(req.query.limit, 10) || 10; // Default to 10 users per page
+    const skip = (page - 1) * limit;
+
+    // Sorting Parameters 
+    const sortBy = req.query.sortBy || 'createdAt'; // Default sort field
+    const order = req.query.order === 'desc' ? -1 : 1; // Default sort order ascending (1)
+    const sortOptions = { [sortBy]: order };
+
+    // Filtering (Example - add more as needed) 
+    const filter = {};
+    // Example: Add search by name/email later
+    // if (req.query.search) {
+    //     filter.$or = [
+    //         { name: { $regex: req.query.search, $options: 'i' } },
+    //         { email: { $regex: req.query.search, $options: 'i' } }
+    //     ];
+    // }
+
+    // Database Query 
+    // Promise.all to fetch users and total count concurrently
+    const [users, totalUsers] = await Promise.all([
+        User.find(filter)
+            .select('-password -refreshToken')
+            .sort(sortOptions)
+            .skip(skip)
+            .limit(limit),
+        User.countDocuments(filter) // Get total documents matchin the filter
+    ]);
+
+    // Calculate Pagination metadata
+    const totalPages = Math.ceil(totalUsers/limit);
+    const pagination = {
+        totalUsers,
+        totalPages,
+        currentPage: page,
+        limit,
+    }
+
+    // Structure the response data as expected by RTK query slice
+    const responseData = {
+        users,
+        pagination,
+    };
+
+
     return res
     .status(200)
-    .json(new ApiResponse(200, users, 'All users fetched successfully'))
+    .json(new ApiResponse(200, responseData, 'All users fetched successfully'));
 })
 
 /**
