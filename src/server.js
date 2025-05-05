@@ -9,7 +9,7 @@ import { User} from "./models/user.model.js";
 import initializeChatHandler from "./socketHandlers/chat.handler.js";
 import initializeQnaHandler from "./socketHandlers/qna.handler.js";
 import cron from 'node-cron';
-import updateEventStatuses from "./services/eventStatusUpdater.js";
+import updateEventStatusesAndSendReminders from "./services/eventStatusUpdater.js";
 
 dotenv.config({
     path: '../.env'
@@ -93,12 +93,12 @@ const startServer = async () => {
             const cronSchedule = '*/15 * * * *';
             console.log(`Scheduling event status update job with schedule: ${cronSchedule}`)
             cron.schedule(cronSchedule, () => {
-                console.log('Triggering scheduled event status update...');
-                updateEventStatuses();
+                console.log('Triggering scheduled event status update and reminder job...');
+                updateEventStatusesAndSendReminders();
             });
             // Run once immediately on startup as well
             console.log('Running initial event status update...');
-            updateEventStatuses();
+            updateEventStatusesAndSendReminders();
         });
     } catch (error) {
         console.error("Failed to start the server:", error);

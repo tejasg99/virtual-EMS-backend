@@ -23,13 +23,7 @@ const eventSchema  = new Schema({
     },
     endTime: {
         type: Date,
-        required: [true, 'End time is required'],
-        // validate: [
-        //     function(value) {
-        //         return this.startTime < value;
-        //     },
-        //     'End time must be after start time'
-        // ]
+        required: [true, 'End time is required']
     },
     organizer: {
         type: Schema.Types.ObjectId,
@@ -59,6 +53,11 @@ const eventSchema  = new Schema({
         type: Number,
         min: [1, 'Max attendees must be at least 1']
     },
+    reminderSent: {
+        type: Boolean,
+        default: false,
+        index: true // Index this field for efficient querying
+    }
 }, {
     timestamps: true,
 })
