@@ -8,6 +8,8 @@ import jwt from "jsonwebtoken";
 import { User} from "./models/user.model.js";
 import initializeChatHandler from "./socketHandlers/chat.handler.js";
 import initializeQnaHandler from "./socketHandlers/qna.handler.js";
+import cron from 'node-cron';
+import updateEventStatuses from "./services/eventStatusUpdater.js";
 
 dotenv.config({
     path: '../.env'
@@ -79,16 +81,32 @@ io.on('connection', (socket) => {
     })
 })
 
-connectDB()
-.then(() => {
-    app.listen(config.port || 5000, () => {
-        console.log(`Server running on port: ${process.env.PORT}`)
-    })
-})
-.catch((err)=>{
-    console.log("MONGO db connection failed !!!", err);
-    process.exit(1);
-})
+// Connect database and start server
+const startServer = async () => {
+    try {
+        await connectDB();
+        server.listen(config.port, () => {
+            console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${config.port}`);
+
+            // Schedule Event Status Updates
+            // Run the job every 15 minutes('*/15 * * * *')
+            const cronSchedule = '*/15 * * * *';
+            console.log(`Scheduling event status update job with schedule: ${cronSchedule}`)
+            cron.schedule(cronSchedule, () => {
+                console.log('Triggering scheduled event status update...');
+                updateEventStatuses();
+            });
+            // Run once immediately on startup as well
+            console.log('Running initial event status update...');
+            updateEventStatuses();
+        });
+    } catch (error) {
+        console.error("Failed to start the server:", error);
+        process.exit(1);
+    }
+};
+
+startServer();
 
 // --- Handle Unhandled Rejections and Uncaught Exceptions ---
 process.on('unhandledRejection', (err) => {
