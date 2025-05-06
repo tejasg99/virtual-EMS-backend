@@ -4,10 +4,30 @@ import { Event } from "../models/event.model.js";
 
 const initializeQnaHandler = (io, socket) => {
     // using a separate room for qna
-    const getQnaRoom = (eventId) = `event-${eventId}-qna`;
+    // const getQnaRoom = (eventId) = `event-${eventId}-qna`;
+    // Add logging inside the function
+    const getQnaRoom = (eventIdArg) => {
+        // console.log(`[getQnaRoom] Received eventIdArg: ${eventIdArg} (Type: ${typeof eventIdArg})`); // Log argument received
+        if (!eventIdArg) {
+            console.error("[getQnaRoom] CRITICAL: eventIdArg is missing or falsy!");
+            // Optionally throw an error here to see the stack trace more clearly
+            // throw new Error("eventId is required to get QnA room name");
+        }
+        return `event-${eventIdArg}-qna`;
+    };
 
     // join qna event room
-    socket.on('joinEventRoom', async({eventId}, ack) => {
+    socket.on('joinEventRoom', async( data, ack) => {
+        const { eventId } = data || {}; // Destructure safely
+        console.log(`[joinEventQnaRoom] Received data: ${JSON.stringify(data)}, Extracted eventId: ${eventId}`); // Log received data and extracted ID
+
+        // Check if eventId was received
+        if (!eventId) {
+            console.error(`[Socket ${socket.id}] joinEventQnaRoom: eventId missing in payload.`);
+            if (ack) ack({ success: false, message: 'Event ID is required.' });
+            return;
+        }
+
         if(!isValidObjectId(eventId)) {
             if (ack) ack({ success: false, message: 'Invalid event ID format' });
             return;
@@ -40,7 +60,17 @@ const initializeQnaHandler = (io, socket) => {
     });
 
     // Submit question
-    socket.on('submitQuestion', async({ eventId, question }, ack) => {
+    socket.on('submitQuestion', async( data, ack) => {
+        const { eventId, question } = data || {}; // Destructure safely
+        console.log(`[submitQuestion] Received data: ${JSON.stringify(data)}, Extracted eventId: ${eventId}`); // Log
+
+        // Check required fields
+        if (!eventId || !question) {
+            console.error(`[Socket ${socket.id}] submitQuestion: eventId or question missing in payload.`);
+            if (ack) ack({ success: false, message: 'Event ID and question are required.' });
+            return;
+        }
+
         // eventId and question data validation
         if(!isValidObjectId(eventId)) {
             if (ack) ack({ success: false, message: 'Invalid event ID format' });
@@ -86,7 +116,17 @@ const initializeQnaHandler = (io, socket) => {
     });
 
     //Answer question
-    socket.on('answerQuestion', async({eventId, questionId, answer }, ack) => {
+    socket.on('answerQuestion', async( data, ack) => {
+        const { eventId, questionId, answer } = data || {}; // Destructure safely
+        console.log(`[answerQuestion] Received data: ${JSON.stringify(data)}, Extracted eventId: ${eventId}, questionId: ${questionId}`); // Log
+
+        // Check required fields
+        if (!eventId || !questionId || !answer) {
+            console.error(`[Socket ${socket.id}] answerQuestion: eventId, questionId, or answer missing.`);
+            if (ack) ack({ success: false, message: 'Event ID, Question ID, and Answer are required.' });
+            return;
+        }
+
         if(!isValidObjectId(eventId)) {
             if (ack) ack({ success: false, message: 'Invalid event ID format' });
             return;
@@ -151,7 +191,17 @@ const initializeQnaHandler = (io, socket) => {
     });
 
     // Leave Event QnA Room 
-    socket.on('leaveEventQnaRoom', ({ eventId }, ack) => {
+    socket.on('leaveEventQnaRoom', ( data, ack) => {
+        const { eventId } = data || {}; // Destructure safely
+        console.log(`[leaveEventQnaRoom] Received data: ${JSON.stringify(data)}, Extracted eventId: ${eventId}`); // Log
+
+        // Check required fields
+        if (!eventId) {
+            console.error(`[Socket ${socket.id}] leaveEventQnaRoom: eventId missing.`);
+            if (ack) ack({ success: false, message: 'Event ID is required.' });
+            return;
+        }
+
         if (!isValidObjectId(eventId)) {
             if (ack) ack({ success: false, message: 'Invalid event ID format' });
             return;

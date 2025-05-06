@@ -5,7 +5,15 @@ import { Event } from "../models/event.model.js";
 const initializeChatHandler = (io, socket) => {
 
     // join event chat room 
-    socket.on('joinEventRoom', async({eventId}, ack) => {
+    socket.on('joinEventRoom', async( data, ack) => {
+        const { eventId } = data || {};
+        // Check if eventId was actually received
+        if (!eventId) {
+            console.error(`[Socket ${socket.id}] joinEventRoom: eventId missing in payload.`);
+            if (ack) ack({ success: false, message: 'Event ID is required.' });
+            return;
+        }
+
         if(!isValidObjectId(eventId)) {
             console.error(`[Socket ${socket.id} Invalid event id format: ${eventId}]`);
             if(ack) ack({ success: false, message: 'Invalid event id format'});
@@ -45,7 +53,15 @@ const initializeChatHandler = (io, socket) => {
     })
 
     // Send chat message
-    socket.on('sendChatMessage', async({eventId, message}, ack) => {
+    socket.on('sendChatMessage', async( data, ack) => {
+        const { eventId, message } = data || {};
+        // Check if eventId was received
+        if (!eventId) {
+            console.error(`[Socket ${socket.id}] sendChatMessage: eventId missing in payload.`);
+            if (ack) ack({ success: false, message: 'Event ID is required.' });
+            return;
+        }
+
         if(!isValidObjectId(eventId)) {
             if (ack) ack({ success: false, message: 'Invalid event ID format' });
             return;
@@ -94,7 +110,8 @@ const initializeChatHandler = (io, socket) => {
     });
 
     // Leave Event chat room
-    socket.on('leaveEventRoom', ({eventId}, ack) => {
+    socket.on('leaveEventRoom', ( data, ack) => {
+        const { eventId } = data || {};
         if(!isValidObjectId(eventId)) {
             if (ack) ack({ success: false, message: 'Invalid event ID format' });
             return;

@@ -62,6 +62,17 @@ const eventSchema  = new Schema({
     timestamps: true,
 })
 
+// PRE-SAVE HOOK 
+// Ensure jitsiRoomName is set before saving, even if default somehow fails
+eventSchema.pre('save', function(next) {
+    if (this.isNew && !this.jitsiRoomName) {
+      // If it's a new document and jitsiRoomName is still missing (despite default/required)
+      console.warn(`jitsiRoomName was missing before save for event ${this.title}. Generating default.`);
+      this.jitsiRoomName = generateUniqueRoomName();
+    }
+    next(); // Continue with the save operation
+});
+
 // Indexing common query fields
 eventSchema.index({ startTime: 1 });
 eventSchema.index({ organizer: 1 });
