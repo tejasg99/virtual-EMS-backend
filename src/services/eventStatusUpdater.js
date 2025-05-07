@@ -11,7 +11,7 @@ const REMINDER_WINDOW_MINUTES =
 const updateEventStatusesAndSendReminders = async () => {
   const now = new Date();
   console.log(
-    `[${now.toISOString()}] Running event status update & reminder job...`
+    `[${now.toLocaleTimeString()}] Running event status update & reminder job...`
   );
 
   try {

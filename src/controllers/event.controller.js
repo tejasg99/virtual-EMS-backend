@@ -291,22 +291,27 @@ const deleteEvent = asyncHandler(async(req, res) => {
         throw new ApiError(403, 'You do not have permission to delete this event');
     }
 
-    // Check if already cancelled
-    if (event.status === 'cancelled') {
-        return res
-        .status(200)
-        .json(new ApiResponse(200, event, 'Event is already cancelled'));
+    // Perform hard delete
+    const deletedEvent = await Event.findByIdAndDelete(eventId);
+
+    if(!deletedEvent) {
+        throw new ApiError(404, 'Event not found or already deleted during the process.');
     }
 
-    // Performing "Soft Delete" by updating status to 'cancelled' for now
-    event.status = 'cancelled';
-    await event.save({ validateBeforeSave: false });
-
-    // TODO: Consider triggering notifications to registered users here or via an event listener
+    // Handle cascading deletes for related data
+    try {
+        const deleteRegistrationsResult = await Registration.deleteMany({ event: eventId });
+        console.log(`Deleted ${deleteRegistrationsResult.deletedCount} registrations associated with event ${eventId}`);
+        // Also, deleting related chat messages, Q&A items if they are stored and linked to the eventId.
+        // await ChatMessage.deleteMany({ event: eventId });
+        // await QnAMessage.deleteMany({ event: eventId });
+    } catch (cascadeError) {
+        console.error(`Error during cascading delete for event ${eventId}:`, cascadeError);
+    }
 
     return res
     .status(200)
-    .json(new ApiResponse(200, event, 'Event cancelled successfully'));
+    .json(new ApiResponse(200, null, 'Event deleted permanently and successfully'));
 })
 
 /**
