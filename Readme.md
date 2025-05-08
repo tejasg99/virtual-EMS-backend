@@ -35,7 +35,7 @@ Built with Node.js, Express, and MongoDB, this backend supports features like ev
     * Automated email reminders sent to registered users shortly before an event starts (configurable time window).
 * **Email Notifications (Nodemailer):**
     * Service for sending emails (e.g., welcome email on registration, event reminders).
-    * Configurable via environment variables for different email providers (e.g., SendGrid, Mailgun).
+    * Configurable via environment variables for different email providers (Mailjet).
 * **Admin Functionality:**
     * Seed script (`seed:admin`) to create the initial administrator account.
     * API endpoints for listing users, changing user roles, and deleting users (accessible only to admins).
@@ -51,9 +51,9 @@ Built with Node.js, Express, and MongoDB, this backend supports features like ev
 * **Authentication:** JSON Web Tokens (JWT), bcryptjs (hashing)
 * **Real-time:** Socket.IO
 * **Scheduling:** node-cron
-* **Email:** Nodemailer
+* **Email:** Nodemailer, Mailjet
 * **Environment Variables:** dotenv
-* **Other:** cors, cookie-parser, http-status, morgan (dev logging)
+* **Other:** cors, cookie-parser
 
 ## Project Structure (Layer-Based)
 ```
